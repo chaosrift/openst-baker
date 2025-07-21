@@ -1,0 +1,50 @@
+name: OpenST Baker Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      board:
+        description: 'Board name to build the image for'
+        required: true
+        default: 'mp157a-dsi-rvt-emmc-mx'
+        type: choice
+        options:
+          - mp157a-dsi-rvt-emmc-mx
+          - mp157a-hdmi-lt-emmc-mx
+
+env:
+  RECIPE_REP: 'diverger/ubuntu-rockchip'
+  RECIPE_REF: 'diverger'
+  RECIPE_DIR: "."
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build OpenST Image
+
+    steps:
+      - name: Get more disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          swap-storage: true
+
+      - name: Checkout build repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.RECIPE_REP }}
+          ref: ${{ env.RECIPE_REF }}
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          path: ${{ env.RECIPE_DIR }}
+          clean: false
+          fetch-depth: 1
+          lfs: true
+
+      - name: Build OpenST Image
+        uses: ./
+        with:
+          board: ${{ inputs.board || 'mp157a-dsi-rvt-emmc-mx' }}
