@@ -14,7 +14,7 @@ on:
 
 env:
   RECIPE_REP: 'diverger/openst-build'
-  RECIPE_REF: 'diverger'
+  RECIPE_REF: 'main'
   RECIPE_DIR: "."
 
 jobs:
