@@ -48,3 +48,4 @@ jobs:
         uses: ./
         with:
           board: ${{ inputs.board || 'mp157a-dsi-rvt-emmc-mx' }}
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
