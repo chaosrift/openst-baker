@@ -3,14 +3,11 @@ name: OpenST Baker Build
 on:
   workflow_dispatch:
     inputs:
-      board:
-        description: 'Board name to build the image for'
+      boards:
+        description: 'Boards to build (comma-separated or "all")'
         required: true
         default: 'mp157a-dsi-rvt-emmc-mx'
-        type: choice
-        options:
-          - mp157a-dsi-rvt-emmc-mx
-          - mp157a-hdmi-lt-emmc-mx
+        type: string
 
 env:
   RECIPE_REP: 'diverger/openst-build'
@@ -18,9 +15,29 @@ env:
   RECIPE_DIR: "."
 
 jobs:
-  build:
+  prepare:
     runs-on: ubuntu-latest
-    name: Build OpenST Image
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: |
+          if [ "${{ inputs.boards }}" = "all" ]; then
+            echo 'matrix=["mp157a-dsi-rvt-emmc-mx","mp157a-hdmi-lt-emmc-mx","mp157c-dk2","mp135f-dk"]' >> $GITHUB_OUTPUT
+          else
+            # Convert comma-separated input to JSON array
+            boards=$(echo "${{ inputs.boards }}" | jq -R -s -c 'split(",") | map(select(length > 0) | gsub("^\\s+|\\s+$"; ""))')
+            echo "matrix=$boards" >> $GITHUB_OUTPUT
+          fi
+
+  build:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        board: ${{ fromJson(needs.prepare.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    name: Build ${{ matrix.board }}
 
     steps:
       - name: Get more disk space
@@ -47,5 +64,5 @@ jobs:
       - name: Build OpenST Image
         uses: ./
         with:
-          board: ${{ inputs.board || 'mp157a-dsi-rvt-emmc-mx' }}
+          board: ${{ matrix.board }}
           token: ${{ secrets.GH_ACCESS_TOKEN }}
