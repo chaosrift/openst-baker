@@ -13,6 +13,11 @@ on:
           - 'mp157c-dk2'
           - 'mp135f-dk'
 
+env:
+  RECIPE_REP: 'diverger/openst-build'
+  RECIPE_REF: 'main'
+  RECIPE_DIR: "."
+
 jobs:
   # Build components in parallel
   build-components:
@@ -22,8 +27,26 @@ jobs:
         component: [kernel, bootloader, core, graphics]
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Get more disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          swap-storage: true
+
+      - name: Checkout build repository
         uses: actions/checkout@v4
+        with:
+          repository: ${{ env.RECIPE_REP }}
+          ref: ${{ env.RECIPE_REF }}
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          path: ${{ env.RECIPE_DIR }}
+          clean: false
+          fetch-depth: 1
+          lfs: true
 
       - name: Build Component
         uses: ./
@@ -37,8 +60,26 @@ jobs:
     needs: build-components
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Get more disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          swap-storage: true
+
+      - name: Checkout build repository
         uses: actions/checkout@v4
+        with:
+          repository: ${{ env.RECIPE_REP }}
+          ref: ${{ env.RECIPE_REF }}
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          path: ${{ env.RECIPE_DIR }}
+          clean: false
+          fetch-depth: 1
+          lfs: true
 
       - name: Download all component artifacts
         uses: actions/download-artifact@v4
