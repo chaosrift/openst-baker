@@ -1,0 +1,61 @@
+name: 'Parallel STM32MP Build'
+
+on:
+  workflow_dispatch:
+    inputs:
+      board:
+        description: 'Board name to build'
+        required: true
+        default: 'mp157a-dsi-rvt-emmc-mx'
+        type: choice
+        options:
+          - 'mp157a-dsi-rvt-emmc-mx'
+          - 'mp157c-dk2'
+          - 'mp135f-dk'
+
+jobs:
+  # Build components in parallel
+  build-components:
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [kernel, bootloader, core, graphics]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Component
+        uses: ./
+        with:
+          board: ${{ github.event.inputs.board }}
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          component: ${{ matrix.component }}
+
+  # Build final image after components are done
+  build-image:
+    needs: build-components
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all component artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: build-*-${{ github.event.inputs.board }}
+          path: ./artifacts
+
+      - name: Build Final Image
+        uses: ./openst-build
+        with:
+          board: ${{ github.event.inputs.board }}
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          component: image
+
+      - name: Upload Final Image
+        uses: actions/upload-artifact@v4
+        with:
+          name: stm32mp-image-${{ github.event.inputs.board }}
+          path: st-yocto/build/tmp/deploy/images/
+          retention-days: 30
