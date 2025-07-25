@@ -1,0 +1,164 @@
+name: OpenST Multi-Stage Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      board:
+        description: 'Board name to build'
+        required: true
+        default: 'mp157a-dsi-rvt-emmc-mx'
+        type: choice
+        options:
+          - mp157a-dsi-rvt-emmc-mx
+          - mp157a-hdmi-lt-emmc-mx
+          - mp157c-dk2
+          - mp135f-dk
+
+env:
+  RECIPE_REP: 'diverger/openst-build'
+  RECIPE_REF: 'main'
+  RECIPE_DIR: "."
+
+jobs:
+  # Stage 1: Download sources and setup environment
+  setup-sources:
+    runs-on: ubuntu-latest-4-cores
+    timeout-minutes: 90
+    steps:
+      - name: Get more disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          swap-storage: true
+
+      - name: Checkout build repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.RECIPE_REP }}
+          ref: ${{ env.RECIPE_REF }}
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          path: ${{ env.RECIPE_DIR }}
+
+      - name: Setup and Fetch Sources
+        uses: ./
+        with:
+          board: ${{ inputs.board }}
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          component: fetch-only
+
+      - name: Cache Sources and DL_DIR
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            st-yocto/build/downloads/
+            st-yocto/build/sstate-cache/
+            st-yocto/
+          key: yocto-sources-${{ inputs.board }}-${{ github.run_id }}
+
+  # Stage 2: Build toolchain and basic components
+  build-toolchain:
+    needs: setup-sources
+    runs-on: ubuntu-latest-8-cores
+    timeout-minutes: 300  # 5 hours
+    steps:
+      - name: Get more disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          swap-storage: true
+
+      - name: Checkout build repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.RECIPE_REP }}
+          ref: ${{ env.RECIPE_REF }}
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          path: ${{ env.RECIPE_DIR }}
+
+      - name: Restore Sources Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            st-yocto/build/downloads/
+            st-yocto/build/sstate-cache/
+            st-yocto/
+          key: yocto-sources-${{ inputs.board }}-${{ github.run_id }}
+
+      - name: Build Toolchain and Core Components
+        uses: ./
+        with:
+          board: ${{ inputs.board }}
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          component: toolchain
+
+      - name: Cache Toolchain Build
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            st-yocto/build/tmp/
+            st-yocto/build/sstate-cache/
+          key: yocto-toolchain-${{ inputs.board }}-${{ github.run_id }}
+
+  # Stage 3: Build final image
+  build-image:
+    needs: build-toolchain
+    runs-on: ubuntu-latest-8-cores
+    timeout-minutes: 300  # 5 hours
+    steps:
+      - name: Get more disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          swap-storage: true
+
+      - name: Checkout build repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.RECIPE_REP }}
+          ref: ${{ env.RECIPE_REF }}
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          path: ${{ env.RECIPE_DIR }}
+
+      - name: Restore Sources Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            st-yocto/build/downloads/
+            st-yocto/build/sstate-cache/
+            st-yocto/
+          key: yocto-sources-${{ inputs.board }}-${{ github.run_id }}
+
+      - name: Restore Toolchain Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            st-yocto/build/tmp/
+            st-yocto/build/sstate-cache/
+          key: yocto-toolchain-${{ inputs.board }}-${{ github.run_id }}
+
+      - name: Build Final Image
+        uses: ./
+        with:
+          board: ${{ inputs.board }}
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          component: image
+
+      - name: Upload Final Image
+        uses: actions/upload-artifact@v4
+        with:
+          name: stm32mp-image-${{ inputs.board }}
+          path: |
+            st-yocto/build/tmp/deploy/images/
+          retention-days: 7
