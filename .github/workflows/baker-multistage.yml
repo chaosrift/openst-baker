@@ -234,6 +234,80 @@ jobs:
             yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles('conf/local.conf', 'conf/bblayers.conf', 'meta-*/conf/layer.conf') }}-
             yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-
 
+      - name: Build Bootloader
+        uses: ./
+        with:
+          board: ${{ inputs.board }}
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          component: bootloader
+
+      - name: Upload Bootloader Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bootloader-${{ inputs.board }}
+          path: |
+            st-yocto/build/tmp/deploy/images/
+          retention-days: 3
+
+  # Stage 4: Build final image (depends on both kernel and bootloader)
+  build-final-image:
+    needs: [build-kernel, build-bootloader]
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 360  # 6 hours
+    steps:
+      - name: Get more disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          swap-storage: true
+
+      - name: Checkout build repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.RECIPE_REP }}
+          ref: ${{ env.RECIPE_REF }}
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          path: ${{ env.RECIPE_DIR }}
+
+      - name: Restore Sources Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            st-yocto/build/downloads/
+            st-yocto/build/sstate-cache/
+            st-yocto/
+          key: yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles('conf/local.conf', 'conf/bblayers.conf', 'meta-*/conf/layer.conf') }}-${{ github.sha }}
+          restore-keys: |
+            yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles('conf/local.conf', 'conf/bblayers.conf', 'meta-*/conf/layer.conf') }}-
+            yocto-sources-${{ inputs.board }}-${{ runner.os }}-
+
+      - name: Restore Toolchain Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            st-yocto/build/tmp/
+            st-yocto/build/sstate-cache/
+          key: yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles('conf/local.conf', 'conf/bblayers.conf', 'meta-*/conf/layer.conf') }}-${{ github.sha }}
+          restore-keys: |
+            yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles('conf/local.conf', 'conf/bblayers.conf', 'meta-*/conf/layer.conf') }}-
+            yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-
+
+      - name: Download Kernel Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: kernel-${{ inputs.board }}
+          path: st-yocto/build/tmp/deploy/images/
+
+      - name: Download Bootloader Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: bootloader-${{ inputs.board }}
+          path: st-yocto/build/tmp/deploy/images/
+
       - name: Build Final Image
         uses: ./
         with:
