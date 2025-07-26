@@ -123,7 +123,7 @@ jobs:
   build-image:
     needs: build-toolchain
     runs-on: ${{ inputs.runner }}
-    timeout-minutes: 300  # 5 hours
+    timeout-minutes: 360  # 6 hours
     steps:
       - name: Get more disk space
         uses: jlumbroso/free-disk-space@main
