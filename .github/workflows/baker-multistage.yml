@@ -70,7 +70,7 @@ jobs:
             st-yocto/build/downloads/
             st-yocto/build/sstate-cache/
             st-yocto/
-          key: yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles('conf/local.conf', 'conf/bblayers.conf', 'meta-*/conf/layer.conf') }}-${{ github.sha }}
+          key: yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
 
   # Stage 2: Build toolchain and basic components
   build-toolchain:
@@ -121,7 +121,7 @@ jobs:
           path: |
             st-yocto/build/tmp/
             st-yocto/build/sstate-cache/
-          key: yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles('conf/local.conf', 'conf/bblayers.conf', 'meta-*/conf/layer.conf') }}-${{ github.sha }}
+          key: yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
 
 
   # Stage 3a: Build kernel
@@ -218,9 +218,9 @@ jobs:
             st-yocto/build/downloads/
             st-yocto/build/sstate-cache/
             st-yocto/
-          key: yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles('conf/local.conf', 'conf/bblayers.conf', 'meta-*/conf/layer.conf') }}-${{ github.sha }}
+          key: yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
           restore-keys: |
-            yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles('conf/local.conf', 'conf/bblayers.conf', 'meta-*/conf/layer.conf') }}-
+            yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-
             yocto-sources-${{ inputs.board }}-${{ runner.os }}-
 
       - name: Restore Toolchain Cache
@@ -229,9 +229,9 @@ jobs:
           path: |
             st-yocto/build/tmp/
             st-yocto/build/sstate-cache/
-          key: yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles('conf/local.conf', 'conf/bblayers.conf', 'meta-*/conf/layer.conf') }}-${{ github.sha }}
+          key: yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
           restore-keys: |
-            yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles('conf/local.conf', 'conf/bblayers.conf', 'meta-*/conf/layer.conf') }}-
+            yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-
             yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-
 
       - name: Build Bootloader
@@ -280,9 +280,9 @@ jobs:
             st-yocto/build/downloads/
             st-yocto/build/sstate-cache/
             st-yocto/
-          key: yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles('conf/local.conf', 'conf/bblayers.conf', 'meta-*/conf/layer.conf') }}-${{ github.sha }}
+          key: yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
           restore-keys: |
-            yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles('conf/local.conf', 'conf/bblayers.conf', 'meta-*/conf/layer.conf') }}-
+            yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-
             yocto-sources-${{ inputs.board }}-${{ runner.os }}-
 
       - name: Restore Toolchain Cache
@@ -291,9 +291,9 @@ jobs:
           path: |
             st-yocto/build/tmp/
             st-yocto/build/sstate-cache/
-          key: yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles('conf/local.conf', 'conf/bblayers.conf', 'meta-*/conf/layer.conf') }}-${{ github.sha }}
+          key: yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
           restore-keys: |
-            yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles('conf/local.conf', 'conf/bblayers.conf', 'meta-*/conf/layer.conf') }}-
+            yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-
             yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-
 
       - name: Download Kernel Artifacts
