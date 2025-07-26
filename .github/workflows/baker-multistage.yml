@@ -300,13 +300,23 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: kernel-${{ inputs.board }}
-          path: st-yocto/build/tmp/deploy/images/
+          path: kernel-artifacts/
 
       - name: Download Bootloader Artifacts
         uses: actions/download-artifact@v4
         with:
           name: bootloader-${{ inputs.board }}
-          path: st-yocto/build/tmp/deploy/images/
+          path: bootloader-artifacts/
+
+      - name: Merge Artifacts
+        run: |
+          mkdir -p st-yocto/build/tmp/deploy/images/
+          cp -r kernel-artifacts/st-yocto/build/tmp/deploy/images/* st-yocto/build/tmp/deploy/images/ 2>/dev/null || true
+          cp -r bootloader-artifacts/st-yocto/build/tmp/deploy/images/* st-yocto/build/tmp/deploy/images/ 2>/dev/null || true
+          if [ -d "kernel-artifacts/st-yocto/build/tmp/sysroots-components/" ]; then
+            mkdir -p st-yocto/build/tmp/sysroots-components/
+            cp -r kernel-artifacts/st-yocto/build/tmp/sysroots-components/* st-yocto/build/tmp/sysroots-components/ 2>/dev/null || true
+          fi
 
       - name: Build Final Image
         uses: ./
