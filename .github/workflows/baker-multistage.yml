@@ -30,6 +30,7 @@ env:
   RECIPE_REP: 'diverger/openst-build'
   RECIPE_REF: 'main'
   RECIPE_DIR: "."
+  HASHFILES_ARGS: 'conf/local.conf conf/bblayers.conf meta-*/conf/layer.conf'
 
 jobs:
   # Stage 1: Download sources and setup environment
@@ -69,7 +70,7 @@ jobs:
             st-yocto/build/downloads/
             st-yocto/build/sstate-cache/
             st-yocto/
-          key: yocto-sources-${{ inputs.board }}-${{ github.run_id }}
+          key: yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles('conf/local.conf', 'conf/bblayers.conf', 'meta-*/conf/layer.conf') }}-${{ github.sha }}
 
   # Stage 2: Build toolchain and basic components
   build-toolchain:
@@ -102,7 +103,10 @@ jobs:
             st-yocto/build/downloads/
             st-yocto/build/sstate-cache/
             st-yocto/
-          key: yocto-sources-${{ inputs.board }}-${{ github.run_id }}
+          key: yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
+          restore-keys: |
+            yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-
+            yocto-sources-${{ inputs.board }}-${{ runner.os }}-
 
       - name: Build Toolchain and Core Components
         uses: ./
@@ -117,10 +121,11 @@ jobs:
           path: |
             st-yocto/build/tmp/
             st-yocto/build/sstate-cache/
-          key: yocto-toolchain-${{ inputs.board }}-${{ github.run_id }}
+          key: yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles('conf/local.conf', 'conf/bblayers.conf', 'meta-*/conf/layer.conf') }}-${{ github.sha }}
 
-  # Stage 3: Build final image
-  build-image:
+
+  # Stage 3a: Build kernel
+  build-kernel:
     needs: build-toolchain
     runs-on: ${{ inputs.runner }}
     timeout-minutes: 360  # 6 hours
@@ -150,7 +155,10 @@ jobs:
             st-yocto/build/downloads/
             st-yocto/build/sstate-cache/
             st-yocto/
-          key: yocto-sources-${{ inputs.board }}-${{ github.run_id }}
+          key: yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
+          restore-keys: |
+            yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-
+            yocto-sources-${{ inputs.board }}-${{ runner.os }}-
 
       - name: Restore Toolchain Cache
         uses: actions/cache/restore@v4
@@ -158,7 +166,73 @@ jobs:
           path: |
             st-yocto/build/tmp/
             st-yocto/build/sstate-cache/
-          key: yocto-toolchain-${{ inputs.board }}-${{ github.run_id }}
+          key: yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
+          restore-keys: |
+            yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-
+            yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-
+
+      - name: Build Kernel
+        uses: ./
+        with:
+          board: ${{ inputs.board }}
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          component: kernel
+
+      - name: Upload Kernel Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-${{ inputs.board }}
+          path: |
+            st-yocto/build/tmp/deploy/images/
+            st-yocto/build/tmp/sysroots-components/
+          retention-days: 3
+
+  # Stage 3b: Build bootloader
+  build-bootloader:
+    needs: build-toolchain
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 360  # 6 hours
+    steps:
+      - name: Get more disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          swap-storage: true
+
+      - name: Checkout build repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.RECIPE_REP }}
+          ref: ${{ env.RECIPE_REF }}
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          path: ${{ env.RECIPE_DIR }}
+
+      - name: Restore Sources Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            st-yocto/build/downloads/
+            st-yocto/build/sstate-cache/
+            st-yocto/
+          key: yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles('conf/local.conf', 'conf/bblayers.conf', 'meta-*/conf/layer.conf') }}-${{ github.sha }}
+          restore-keys: |
+            yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles('conf/local.conf', 'conf/bblayers.conf', 'meta-*/conf/layer.conf') }}-
+            yocto-sources-${{ inputs.board }}-${{ runner.os }}-
+
+      - name: Restore Toolchain Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            st-yocto/build/tmp/
+            st-yocto/build/sstate-cache/
+          key: yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles('conf/local.conf', 'conf/bblayers.conf', 'meta-*/conf/layer.conf') }}-${{ github.sha }}
+          restore-keys: |
+            yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles('conf/local.conf', 'conf/bblayers.conf', 'meta-*/conf/layer.conf') }}-
+            yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-
 
       - name: Build Final Image
         uses: ./
