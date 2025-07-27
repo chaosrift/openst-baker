@@ -301,23 +301,41 @@ jobs:
         with:
           name: kernel-${{ inputs.board }}
           path: kernel-artifacts/
+        continue-on-error: true
 
       - name: Download Bootloader Artifacts
         uses: actions/download-artifact@v4
         with:
           name: bootloader-${{ inputs.board }}
           path: bootloader-artifacts/
+        continue-on-error: true
 
       - name: Merge Artifacts
         run: |
           mkdir -p st-yocto/build/tmp/deploy/images/
-          cp -r kernel-artifacts/st-yocto/build/tmp/deploy/images/* st-yocto/build/tmp/deploy/images/ 2>/dev/null || true
-          cp -r bootloader-artifacts/st-yocto/build/tmp/deploy/images/* st-yocto/build/tmp/deploy/images/ 2>/dev/null || true
+
+          # Check if kernel artifacts exist and merge them
+          if [ -d "kernel-artifacts/st-yocto/build/tmp/deploy/images/" ]; then
+            echo "Merging kernel artifacts..."
+            cp -r kernel-artifacts/st-yocto/build/tmp/deploy/images/* st-yocto/build/tmp/deploy/images/ 2>/dev/null || true
+          else
+            echo "Warning: Kernel artifacts not found, skipping kernel artifact merge"
+          fi
+
+          # Check if bootloader artifacts exist and merge them
+          if [ -d "bootloader-artifacts/st-yocto/build/tmp/deploy/images/" ]; then
+            echo "Merging bootloader artifacts..."
+            cp -r bootloader-artifacts/st-yocto/build/tmp/deploy/images/* st-yocto/build/tmp/deploy/images/ 2>/dev/null || true
+          else
+            echo "Warning: Bootloader artifacts not found, skipping bootloader artifact merge"
+          fi
+
+          # Merge sysroots-components if available
           if [ -d "kernel-artifacts/st-yocto/build/tmp/sysroots-components/" ]; then
+            echo "Merging kernel sysroots-components..."
             mkdir -p st-yocto/build/tmp/sysroots-components/
             cp -r kernel-artifacts/st-yocto/build/tmp/sysroots-components/* st-yocto/build/tmp/sysroots-components/ 2>/dev/null || true
           fi
-
       - name: Build Final Image
         uses: ./
         with:
