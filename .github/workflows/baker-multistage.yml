@@ -181,6 +181,14 @@ jobs:
       - name: Debug - List build output directories
         run: |
           echo "=== Checking build directory structure ==="
+          echo "Deploy images directory:"
+          ls -la st-yocto/build/tmp/deploy/images/ || echo "Deploy images directory not found"
+          echo "Sysroots components directory:"
+          ls -la st-yocto/build/tmp/sysroots-components/ || echo "Sysroots components directory not found"
+
+      - name: Upload Kernel Artifacts
+        uses: actions/upload-artifact@v4
+        with:
           name: kernel-${{ inputs.board }}
           path: |
             st-yocto/build/tmp/deploy/images/
@@ -240,6 +248,14 @@ jobs:
           board: ${{ inputs.board }}
           token: ${{ secrets.GH_ACCESS_TOKEN }}
           component: bootloader
+
+      - name: Debug - List build output directories
+        run: |
+          echo "=== Checking build directory structure ==="
+          echo "Deploy images directory:"
+          ls -la st-yocto/build/tmp/deploy/images/ || echo "Deploy images directory not found"
+          echo "Sysroots components directory:"
+          ls -la st-yocto/build/tmp/sysroots-components/ || echo "Sysroots components directory not found"
 
       - name: Upload Bootloader Artifacts
         uses: actions/upload-artifact@v4
