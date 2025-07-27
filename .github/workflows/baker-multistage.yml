@@ -27,7 +27,7 @@ on:
           - github-arm64-ubuntu-24.04-8core  # ARM64 self-hosted runner
 
 env:
-  RECIPE_REP: 'diverger/openst-build'
+  RECIPE_REP: 'diverger/openst-yocto'
   RECIPE_REF: 'main'
   RECIPE_DIR: "."
   HASHFILES_ARGS: 'conf/local.conf conf/bblayers.conf meta-*/conf/layer.conf'
@@ -67,8 +67,8 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: |
-            st-yocto/build/downloads/
-            st-yocto/build/sstate-cache/
+            st-yocto/downloads/
+            st-yocto/sstate-cache/
             st-yocto/
           key: yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
 
@@ -100,8 +100,8 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: |
-            st-yocto/build/downloads/
-            st-yocto/build/sstate-cache/
+            st-yocto/downloads/
+            st-yocto/sstate-cache/
             st-yocto/
           key: yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
           restore-keys: |
@@ -119,8 +119,8 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: |
-            st-yocto/build/tmp/
-            st-yocto/build/sstate-cache/
+            st-yocto/tmp/
+            st-yocto/sstate-cache/
           key: yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
 
 
@@ -152,8 +152,8 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: |
-            st-yocto/build/downloads/
-            st-yocto/build/sstate-cache/
+            st-yocto/downloads/
+            st-yocto/sstate-cache/
             st-yocto/
           key: yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
           restore-keys: |
@@ -164,8 +164,8 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: |
-            st-yocto/build/tmp/
-            st-yocto/build/sstate-cache/
+            st-yocto/tmp/
+            st-yocto/sstate-cache/
           key: yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
           restore-keys: |
             yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-
@@ -182,17 +182,17 @@ jobs:
         run: |
           echo "=== Checking build directory structure ==="
           echo "Deploy images directory:"
-          ls -la st-yocto/build/tmp/deploy/images/ || echo "Deploy images directory not found"
+          ls -la st-yocto/tmp/deploy/images/ || echo "Deploy images directory not found"
           echo "Sysroots components directory:"
-          ls -la st-yocto/build/tmp/sysroots-components/ || echo "Sysroots components directory not found"
+          ls -la st-yocto/tmp/sysroots-components/ || echo "Sysroots components directory not found"
 
       - name: Upload Kernel Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: kernel-${{ inputs.board }}
           path: |
-            st-yocto/build/tmp/deploy/images/
-            st-yocto/build/tmp/sysroots-components/
+            st-yocto/tmp/deploy/images/
+            st-yocto/tmp/sysroots-components/
           retention-days: 3
 
   # Stage 3b: Build bootloader
@@ -223,8 +223,8 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: |
-            st-yocto/build/downloads/
-            st-yocto/build/sstate-cache/
+            st-yocto/downloads/
+            st-yocto/sstate-cache/
             st-yocto/
           key: yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
           restore-keys: |
@@ -235,8 +235,8 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: |
-            st-yocto/build/tmp/
-            st-yocto/build/sstate-cache/
+            st-yocto/tmp/
+            st-yocto/sstate-cache/
           key: yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
           restore-keys: |
             yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-
@@ -253,16 +253,16 @@ jobs:
         run: |
           echo "=== Checking build directory structure ==="
           echo "Deploy images directory:"
-          ls -la st-yocto/build/tmp/deploy/images/ || echo "Deploy images directory not found"
+          ls -la st-yocto/tmp/deploy/images/ || echo "Deploy images directory not found"
           echo "Sysroots components directory:"
-          ls -la st-yocto/build/tmp/sysroots-components/ || echo "Sysroots components directory not found"
+          ls -la st-yocto/tmp/sysroots-components/ || echo "Sysroots components directory not found"
 
       - name: Upload Bootloader Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: bootloader-${{ inputs.board }}
           path: |
-            st-yocto/build/tmp/deploy/images/
+            st-yocto/tmp/deploy/images/
           retention-days: 3
 
   # Stage 4: Build final image (depends on both kernel and bootloader)
@@ -293,8 +293,8 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: |
-            st-yocto/build/downloads/
-            st-yocto/build/sstate-cache/
+            st-yocto/downloads/
+            st-yocto/sstate-cache/
             st-yocto/
           key: yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
           restore-keys: |
@@ -305,8 +305,8 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: |
-            st-yocto/build/tmp/
-            st-yocto/build/sstate-cache/
+            st-yocto/tmp/
+            st-yocto/sstate-cache/
           key: yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
           restore-keys: |
             yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-
@@ -328,29 +328,29 @@ jobs:
 
       - name: Merge Artifacts
         run: |
-          mkdir -p st-yocto/build/tmp/deploy/images/
+          mkdir -p st-yocto/tmp/deploy/images/
 
           # Check if kernel artifacts exist and merge them
-          if [ -d "kernel-artifacts/st-yocto/build/tmp/deploy/images/" ]; then
+          if [ -d "kernel-artifacts/st-yocto/tmp/deploy/images/" ]; then
             echo "Merging kernel artifacts..."
-            cp -r kernel-artifacts/st-yocto/build/tmp/deploy/images/* st-yocto/build/tmp/deploy/images/ 2>/dev/null || true
+            cp -r kernel-artifacts/st-yocto/tmp/deploy/images/* st-yocto/tmp/deploy/images/ 2>/dev/null || true
           else
             echo "Warning: Kernel artifacts not found, skipping kernel artifact merge"
           fi
 
           # Check if bootloader artifacts exist and merge them
-          if [ -d "bootloader-artifacts/st-yocto/build/tmp/deploy/images/" ]; then
+          if [ -d "bootloader-artifacts/st-yocto/tmp/deploy/images/" ]; then
             echo "Merging bootloader artifacts..."
-            cp -r bootloader-artifacts/st-yocto/build/tmp/deploy/images/* st-yocto/build/tmp/deploy/images/ 2>/dev/null || true
+            cp -r bootloader-artifacts/st-yocto/tmp/deploy/images/* st-yocto/tmp/deploy/images/ 2>/dev/null || true
           else
             echo "Warning: Bootloader artifacts not found, skipping bootloader artifact merge"
           fi
 
           # Merge sysroots-components if available
-          if [ -d "kernel-artifacts/st-yocto/build/tmp/sysroots-components/" ]; then
+          if [ -d "kernel-artifacts/st-yocto/tmp/sysroots-components/" ]; then
             echo "Merging kernel sysroots-components..."
-            mkdir -p st-yocto/build/tmp/sysroots-components/
-            cp -r kernel-artifacts/st-yocto/build/tmp/sysroots-components/* st-yocto/build/tmp/sysroots-components/ 2>/dev/null || true
+            mkdir -p st-yocto/tmp/sysroots-components/
+            cp -r kernel-artifacts/st-yocto/tmp/sysroots-components/* st-yocto/tmp/sysroots-components/ 2>/dev/null || true
           fi
       - name: Build Final Image
         uses: ./
@@ -364,5 +364,5 @@ jobs:
         with:
           name: stm32mp-image-${{ inputs.board }}
           path: |
-            st-yocto/build/tmp/deploy/images/
+            st-yocto/tmp/deploy/images/
           retention-days: 7
