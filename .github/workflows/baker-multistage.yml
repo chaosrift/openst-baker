@@ -69,7 +69,7 @@ jobs:
           path: |
             st-yocto/downloads/
             st-yocto/sstate-cache/
-            st-yocto/
+            st-yocto/build-*/
           key: yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
 
   # Stage 2: Build toolchain and basic components
@@ -102,7 +102,7 @@ jobs:
           path: |
             st-yocto/downloads/
             st-yocto/sstate-cache/
-            st-yocto/
+            st-yocto/build-*/
           key: yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
           restore-keys: |
             yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-
@@ -119,7 +119,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: |
-            st-yocto/tmp/
+            st-yocto/build-*/tmp-glibc/
             st-yocto/sstate-cache/
           key: yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
 
@@ -154,7 +154,7 @@ jobs:
           path: |
             st-yocto/downloads/
             st-yocto/sstate-cache/
-            st-yocto/
+            st-yocto/build-*/
           key: yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
           restore-keys: |
             yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-
@@ -164,7 +164,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: |
-            st-yocto/tmp/
+            st-yocto/build-*/tmp-glibc/
             st-yocto/sstate-cache/
           key: yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
           restore-keys: |
@@ -191,8 +191,8 @@ jobs:
         with:
           name: kernel-${{ inputs.board }}
           path: |
-            st-yocto/tmp/deploy/images/
-            st-yocto/tmp/sysroots-components/
+            st-yocto/build-*/tmp-glibc/deploy/images/
+            st-yocto/build-*/tmp-glibc/sysroots-components/
           retention-days: 3
 
   # Stage 3b: Build bootloader
@@ -225,7 +225,7 @@ jobs:
           path: |
             st-yocto/downloads/
             st-yocto/sstate-cache/
-            st-yocto/
+            st-yocto/build-*/
           key: yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
           restore-keys: |
             yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-
@@ -235,7 +235,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: |
-            st-yocto/tmp/
+            st-yocto/build-*/tmp-glibc/
             st-yocto/sstate-cache/
           key: yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
           restore-keys: |
@@ -294,7 +294,7 @@ jobs:
           path: |
             st-yocto/downloads/
             st-yocto/sstate-cache/
-            st-yocto/
+            st-yocto/build-*/
           key: yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
           restore-keys: |
             yocto-sources-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-
@@ -304,7 +304,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: |
-            st-yocto/tmp/
+            st-yocto/build-*/tmp-glibc/
             st-yocto/sstate-cache/
           key: yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-${{ github.sha }}
           restore-keys: |
@@ -327,20 +327,20 @@ jobs:
 
       - name: Merge Artifacts
         run: |
-          mkdir -p st-yocto/tmp/deploy/images/
+          mkdir -p st-yocto/build-openstlinuxweston-${{ inputs.board }}/tmp-glibc/deploy/images/
 
           # Check if kernel artifacts exist and merge them
-          if [ -d "kernel-artifacts/st-yocto/tmp/deploy/images/" ]; then
+          if [ -d "kernel-artifacts/st-yocto/build-openstlinuxweston-${{ inputs.board }}/tmp-glibc/deploy/images/" ]; then
             echo "Merging kernel artifacts..."
-            cp -r kernel-artifacts/st-yocto/tmp/deploy/images/* st-yocto/tmp/deploy/images/ 2>/dev/null || true
+            cp -r kernel-artifacts/st-yocto/build-openstlinuxweston-${{ inputs.board }}/tmp-glibc/deploy/images/* st-yocto/build-openstlinuxweston-${{ inputs.board }}/tmp-glibc/deploy/images/ 2>/dev/null || true
           else
             echo "Warning: Kernel artifacts not found, skipping kernel artifact merge"
           fi
 
           # Check if bootloader artifacts exist and merge them
-          if [ -d "bootloader-artifacts/st-yocto/tmp/deploy/images/" ]; then
+          if [ -d "bootloader-artifacts/build-openstlinuxweston-${{ inputs.board }}/tmp-glibc/deploy/images/" ]; then
             echo "Merging bootloader artifacts..."
-            cp -r bootloader-artifacts/st-yocto/tmp/deploy/images/* st-yocto/tmp/deploy/images/ 2>/dev/null || true
+            cp -r bootloader-artifacts/build-openstlinuxweston-${{ inputs.board }}/tmp-glibc/deploy/images/* st-yocto/build-openstlinuxweston-${{ inputs.board }}/tmp-glibc/deploy/images/ 2
           else
             echo "Warning: Bootloader artifacts not found, skipping bootloader artifact merge"
           fi
