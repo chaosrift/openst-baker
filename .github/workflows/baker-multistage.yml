@@ -182,7 +182,7 @@ jobs:
         run: |
           echo "=== Checking build directory structure ==="
           echo "Deploy images directory:"
-          ls -la st-yocto/tmp/deploy/images/ || echo "Deploy images directory not found"
+          ls -la ${{ steps.build.outputs.deploy_images_dir }} || echo "Deploy images directory not found"
           echo "Sysroots components directory:"
           ls -la st-yocto/tmp/sysroots-components/ || echo "Sysroots components directory not found"
 
@@ -243,6 +243,7 @@ jobs:
             yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-
 
       - name: Build Bootloader
+        id: build-bootloader
         uses: ./
         with:
           board: ${{ inputs.board }}
@@ -253,16 +254,14 @@ jobs:
         run: |
           echo "=== Checking build directory structure ==="
           echo "Deploy images directory:"
-          ls -la st-yocto/tmp/deploy/images/ || echo "Deploy images directory not found"
-          echo "Sysroots components directory:"
-          ls -la st-yocto/tmp/sysroots-components/ || echo "Sysroots components directory not found"
+          ls -la ${{ steps.build-bootloader.outputs.deploy_images_dir }} || echo "Deploy images directory not found"
 
       - name: Upload Bootloader Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: bootloader-${{ inputs.board }}
           path: |
-            st-yocto/tmp/deploy/images/
+            ${{ steps.build-bootloader.outputs.deploy_images_dir }}
           retention-days: 3
 
   # Stage 4: Build final image (depends on both kernel and bootloader)
