@@ -132,6 +132,9 @@ jobs:
     needs: build-toolchain
     runs-on: ${{ inputs.runner }}
     timeout-minutes: 360  # 6 hours
+    outputs:
+      deploy_images_dir: ${{ steps.build-kernel.outputs.deploy_images_dir }}
+
     steps:
       - name: Get more disk space
         uses: jlumbroso/free-disk-space@main
@@ -195,6 +198,9 @@ jobs:
     needs: build-toolchain
     runs-on: ${{ inputs.runner }}
     timeout-minutes: 360  # 6 hours
+    outputs:
+      deploy_images_dir: ${{ steps.build-bootloader.outputs.deploy_images_dir }}
+
     steps:
       - name: Get more disk space
         uses: jlumbroso/free-disk-space@main
@@ -316,15 +322,12 @@ jobs:
 
       - name: Merge Artifacts
         run: |
-          # Use the build directory from setup-sources job
-          BUILD_DIR="${{ needs.setup-sources.outputs.build_dir }}"
-
-          mkdir -p "$BUILD_DIR/deploy/images/"
 
           # Check if kernel artifacts exist and merge them
           if [ -d "kernel-artifacts/$BUILD_DIR/deploy/images/" ]; then
             echo "Merging kernel artifacts..."
-            cp -r "kernel-artifacts/$BUILD_DIR/deploy/images/"* "$BUILD_DIR/deploy/images/" 2>/dev/null || true
+            mkdir -p "${{ needs.build-kernel.outputs.deploy_images_dir }}/"
+            cp -r "kernel-artifacts/$BUILD_DIR/deploy/images/"* "${{ needs.build-kernel.outputs.deploy_images_dir }}/" 2>/dev/null || true
           else
             echo "Warning: Kernel artifacts not found, skipping kernel artifact merge"
             echo "Available kernel artifact structure:"
@@ -334,7 +337,8 @@ jobs:
           # Check if bootloader artifacts exist and merge them
           if [ -d "bootloader-artifacts/" ]; then
             echo "Merging bootloader artifacts..."
-            cp -r bootloader-artifacts/* "$BUILD_DIR/deploy/images/" 2>/dev/null || true
+            mkdir -p "${{ needs.build-bootloader.outputs.deploy_images_dir }}/"
+            cp -r bootloader-artifacts/* "${{ needs.build-bootloader.outputs.deploy_images_dir }}/" 2>/dev/null || true
           else
             echo "Warning: Bootloader artifacts not found, skipping bootloader artifact merge"
           fi
