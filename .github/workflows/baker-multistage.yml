@@ -306,44 +306,7 @@ jobs:
             yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-${{ hashFiles(env.HASHFILES_ARGS) }}-
             yocto-toolchain-${{ inputs.board }}-${{ runner.os }}-
 
-      - name: Download Kernel Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: kernel-${{ inputs.board }}
-          path: kernel-artifacts/
-        continue-on-error: true
-
-      - name: Download Bootloader Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: bootloader-${{ inputs.board }}
-          path: bootloader-artifacts/
-        continue-on-error: true
-
-      - name: Merge Artifacts
-        run: |
-
-          # Check if kernel artifacts exist and merge them
-          if [ -d "kernel-artifacts/$BUILD_DIR/deploy/images/" ]; then
-            echo "Merging kernel artifacts..."
-            mkdir -p "${{ needs.build-kernel.outputs.deploy_images_dir }}/"
-            cp -r "kernel-artifacts/$BUILD_DIR/deploy/images/"* "${{ needs.build-kernel.outputs.deploy_images_dir }}/" 2>/dev/null || true
-          else
-            echo "Warning: Kernel artifacts not found, skipping kernel artifact merge"
-            echo "Available kernel artifact structure:"
-            find kernel-artifacts/ -type d -name "deploy" 2>/dev/null || echo "No deploy directories found"
-          fi
-
-          # Check if bootloader artifacts exist and merge them
-          if [ -d "bootloader-artifacts/" ]; then
-            echo "Merging bootloader artifacts..."
-            mkdir -p "${{ needs.build-bootloader.outputs.deploy_images_dir }}/"
-            cp -r bootloader-artifacts/* "${{ needs.build-bootloader.outputs.deploy_images_dir }}/" 2>/dev/null || true
-          else
-            echo "Warning: Bootloader artifacts not found, skipping bootloader artifact merge"
-          fi
-
-      - name: Build Final Image
+      - name: Build Complete Image
         uses: ./
         with:
           board: ${{ inputs.board }}
